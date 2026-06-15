@@ -176,7 +176,28 @@ LumenVault uses a **neo-brutalist** design language with custom Tailwind utiliti
 | **Settings** | `/settings` | Connected address, network info, disconnect |
 
 ---
+## 🤝 Screenshots
+<img width="1882" height="932" alt="Screenshot 2026-06-15 233921" src="https://github.com/user-attachments/assets/19d34b1e-1318-461e-8bca-5e5fb5635cd2" />
 
+ <center> Homepage </center>
+
+<img width="1885" height="932" alt="Screenshot 2026-06-15 234024" src="https://github.com/user-attachments/assets/1fedec5e-af63-4ee3-a302-9c2221c193f6" />
+
+ <center> Dashboard with account balance </center>
+ <br/>
+
+<img width="1888" height="936" alt="Screenshot 2026-06-15 234109" src="https://github.com/user-attachments/assets/cdf1a15a-3a6c-4dd2-9ee5-f8e1fcd7c096" />
+
+ <center> Transaction successful </center>
+
+<img width="1885" height="933" alt="Screenshot 2026-06-15 234152" src="https://github.com/user-attachments/assets/2879ca92-35af-4b01-a51f-ea6aeb401ed6" />
+
+ <center> Transaction history fetched from wallet </center>
+
+<img width="1898" height="931" alt="Screenshot 2026-06-15 234219" src="https://github.com/user-attachments/assets/d6056205-a621-484a-8dac-e80cc5661b61" />
+
+ <center> Transaction screenshot from Stellar Explorer </center>
+---
 ## 🤝 Contributing
 
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
