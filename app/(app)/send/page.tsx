@@ -111,7 +111,7 @@ export default function SendPage() {
               <button
                 type="button"
                 onClick={() => setAmount(String(balance))}
-                className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-primary"
+                className="text-[10px] font-bold uppercase tracking-widest  text-muted-foreground hover:text-primary"
               >
                 Max:{' '}
                 {parseFloat(balance).toLocaleString(undefined, {
