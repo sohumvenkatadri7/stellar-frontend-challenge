@@ -1,6 +1,6 @@
 /**
  * Stellar Helper - Blockchain Logic with Stellar Wallets Kit
- * ⚠️ DO NOT MODIFY THIS FILE! ⚠️ (Modified for Mainnet Support & Launchpad)
+ * ⚠️ DO NOT MODIFY THIS FILE! ⚠️ (Optimized for Async Control & Instant Transitions)
  */
 
 import * as StellarSdk from '@stellar/stellar-sdk';
@@ -15,7 +15,7 @@ import {
 export class StellarHelper {
   private server: StellarSdk.Horizon.Server;
   private networkPassphrase: string;
-  private kit!: StellarWalletsKit;
+  private kit: StellarWalletsKit | null = null; 
   private network: WalletNetwork;
   private publicKey: string | null = null;
 
@@ -33,18 +33,29 @@ export class StellarHelper {
     this.network = network === 'testnet' 
       ? WalletNetwork.TESTNET 
       : WalletNetwork.PUBLIC;
-
-    // Initialize Stellar Wallets Kit ONLY in the browser
-    if (typeof window !== 'undefined') {
-      this.kit = new StellarWalletsKit({
-        network: this.network,
-        selectedWalletId: FREIGHTER_ID,
-        modules: allowAllModules(),
-      });
-    }
   }
 
-  // NEW: Dynamic network switcher
+  /**
+   * Private helper to lazily initialize the StellarWalletsKit only when needed.
+   * This prevents the main thread from blocking during routing/page loading.
+   */
+  private getKit(): StellarWalletsKit {
+    if (this.kit) return this.kit;
+
+    if (typeof window === 'undefined') {
+      throw new Error('Stellar Wallets Kit cannot be initialized on the server side.');
+    }
+
+    this.kit = new StellarWalletsKit({
+      network: this.network,
+      selectedWalletId: FREIGHTER_ID,
+      modules: allowAllModules(),
+    });
+
+    return this.kit;
+  }
+
+  // Dynamic network switcher
   public setNetwork(network: 'testnet' | 'mainnet') {
     this.server = new StellarSdk.Horizon.Server(
       network === 'testnet'
@@ -60,13 +71,7 @@ export class StellarHelper {
       ? WalletNetwork.TESTNET 
       : WalletNetwork.PUBLIC;
 
-    if (typeof window !== 'undefined') {
-      this.kit = new StellarWalletsKit({
-        network: this.network,
-        selectedWalletId: FREIGHTER_ID,
-        modules: allowAllModules(),
-      });
-    }
+    this.kit = null;
   }
 
   isFreighterInstalled(): boolean {
@@ -75,14 +80,20 @@ export class StellarHelper {
 
   async connectWallet(): Promise<string> {
     try {
-      await this.kit.openModal({
-        onWalletSelected: async (option) => {
-          console.log('Wallet selected:', option.id);
-          this.kit.setWallet(option.id);
-        }
+      const activeKit = this.getKit();
+
+      // FIXED: Wrap in a promise to prevent the extension popup from cutting in front of the modal selection
+      await new Promise<void>((resolve) => {
+        activeKit.openModal({
+          onWalletSelected: async (option) => {
+            console.log('Wallet selected:', option.id);
+            activeKit.setWallet(option.id);
+            resolve(); // Unblocks execution only AFTER a wallet option is clicked
+          }
+        });
       });
 
-      const { address } = await this.kit.getAddress();
+      const { address } = await activeKit.getAddress();
 
       if (!address) {
         throw new Error('Wallet bağlanamadı');
@@ -126,34 +137,28 @@ export class StellarHelper {
     amount: string;
     memo?: string;
   }): Promise<{ hash: string; success: boolean }> {
+    const activeKit = this.getKit();
     const sourceAccount = await this.server.loadAccount(params.from);
     let operation;
 
     try {
-      // 1. Check if the destination account already exists on the ledger
       await this.server.loadAccount(params.to);
-
-      // 2. If it exists, use a standard Payment operation
       operation = StellarSdk.Operation.payment({
         destination: params.to,
         asset: StellarSdk.Asset.native(),
         amount: params.amount,
       });
     } catch (error: any) {
-      // 3. If Horizon throws a 404 error, the account is a "Ghost" (doesn't exist yet).
-      // We must use a CreateAccount operation to bring it to life!
       if (error.response && error.response.status === 404) {
         operation = StellarSdk.Operation.createAccount({
           destination: params.to,
           startingBalance: params.amount,
         });
       } else {
-        // If it's a different error, throw it back up
         throw error; 
       }
     }
 
-    // 4. Build the transaction with our dynamically chosen operation
     const transactionBuilder = new StellarSdk.TransactionBuilder(sourceAccount, {
       fee: StellarSdk.BASE_FEE,
       networkPassphrase: this.networkPassphrase,
@@ -165,8 +170,7 @@ export class StellarHelper {
 
     const transaction = transactionBuilder.setTimeout(180).build();
 
-    // 5. Sign and Submit
-    const { signedTxXdr } = await this.kit.signTransaction(transaction.toXDR(), {
+    const { signedTxXdr } = await activeKit.signTransaction(transaction.toXDR(), {
       networkPassphrase: this.networkPassphrase,
     });
 
@@ -218,21 +222,18 @@ export class StellarHelper {
   }
 
   public async launchToken(assetCode: string, supply: string, userPublicKey: string): Promise<boolean> {
-    if (!this.kit) throw new Error("Wallet kit is not initialized.");
+    const activeKit = this.getKit();
 
-    // Prevent mainnet launches since Friendbot only works on Testnet
     if (this.networkPassphrase === StellarSdk.Networks.PUBLIC) {
       throw new Error("Mainnet token launching requires real XLM to fund the issuer account. Please switch to Testnet!");
     }
 
-    // Now utilizing the dynamic class variables instead of hardcoded ones!
     const server = this.server;
     const networkPassphrase = this.networkPassphrase;
 
     try {
       const issuer = Keypair.random();
 
-      // Fund the Issuer account using Friendbot (Testnet only)
       await fetch(`https://friendbot.stellar.org?addr=${encodeURIComponent(issuer.publicKey())}`);
 
       const userAccount = await server.loadAccount(userPublicKey);
@@ -246,7 +247,7 @@ export class StellarHelper {
         .setTimeout(60)
         .build();
 
-      const { signedTxXdr } = await this.kit.signTransaction(trustlineTx.toXDR(), {
+      const { signedTxXdr } = await activeKit.signTransaction(trustlineTx.toXDR(), {
         networkPassphrase: networkPassphrase,
         address: userPublicKey,
       });
