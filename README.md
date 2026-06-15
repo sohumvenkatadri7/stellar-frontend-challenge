@@ -197,7 +197,9 @@ LumenVault uses a **neo-brutalist** design language with custom Tailwind utiliti
 <img width="1898" height="931" alt="Screenshot 2026-06-15 234219" src="https://github.com/user-attachments/assets/d6056205-a621-484a-8dac-e80cc5661b61" />
 
  <p align="center"><strong>Transaction screenshot from Stellar Explorer</strong></p>
+ 
 ---
+
 ## 🤝 Contributing
 
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
