@@ -5,7 +5,6 @@ import { Rocket, Coins, FileText } from 'lucide-react';
 import { useWallet } from '@/lib/wallet-context';
 
 export default function LaunchpadPage() {
-  // Pull launchToken from your context alongside publicKey
   const { publicKey, launchToken } = useWallet();
   const [assetCode, setAssetCode] = useState('');
   const [supply, setSupply] = useState('');
@@ -15,19 +14,14 @@ export default function LaunchpadPage() {
     e.preventDefault();
     if (!publicKey) return alert('Please connect your wallet first!');
     
-    // Check if the launchToken function exists in context yet
     if (!launchToken) {
       return alert('Launch function is not configured in your wallet context yet.');
     }
     
     setIsMinting(true);
     try {
-      // Call the clean logic from Context
       await launchToken(assetCode, supply);
-      
       alert(`Success! Check your Freighter wallet, ${supply} ${assetCode} has been minted!`);
-      
-      // Clear the form after a successful launch
       setAssetCode('');
       setSupply('');
     } catch (error) {
@@ -66,7 +60,8 @@ export default function LaunchpadPage() {
                 required
                 value={assetCode}
                 onChange={(e) => setAssetCode(e.target.value.toUpperCase())}
-                className="brutal-sm w-full bg-background px-4 py-3 font-mono text-lg outline-none focus:ring-2 focus:ring-primary"
+                // FIXED: Changed bg-background to bg-white so black text is high contrast
+                className="brutal-sm w-full bg-white px-4 py-3 font-mono text-lg text-black placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary"
               />
               <p className="text-xs text-muted-foreground font-mono">1-12 alphanumeric characters.</p>
             </div>
@@ -83,7 +78,8 @@ export default function LaunchpadPage() {
                 required
                 value={supply}
                 onChange={(e) => setSupply(e.target.value)}
-                className="brutal-sm w-full bg-background px-4 py-3 font-mono text-lg outline-none focus:ring-2 focus:ring-primary"
+                // FIXED: Changed bg-background to bg-white so black text is high contrast
+                className="brutal-sm w-full bg-white px-4 py-3 font-mono text-lg text-black placeholder:text-zinc-400 outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
